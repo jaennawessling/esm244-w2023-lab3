@@ -1,0 +1,106 @@
+---
+title: "Lab 3: Binomial Regression"
+author: "Jaenna Wessling"
+date: "2023-01-26"
+output: html_document
+---
+
+```{r setup, echo = FALSE, warning = FALSE, message = FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+
+library(tidyverse)
+library(tidymodels)
+library(palmerpenguins)
+library(AICcmodavg)
+library(GGally)
+library(jtools)
+```
+
+
+# Pseudocode
+* Examine our data (plots, tables, summary stats)
+* Identify a question
+* Wrangle the data
+* Identify some candidate models 
+* Look at model quality: 
+* Select among candidate models using AIC/BIC
+* Select among candidate models using K-fold cross validation
+* Select among candidate models using area under Receiver Operating Characteristic Curve 
+
+
+```{r}
+# Let's explore our data 
+GGally::ggpairs(penguins %>% select(species, bill_length_mm:sex), aes(color = species)) # using colon to call all columns between length - sex
+
+```
+
+
+```{r}
+# Cut down to two most similar species (Chinstrap & Adelie)
+class(penguins$species) # tells us it's a factor with different levels to them 
+levels(penguins$species) # tells us the different levels (species names)
+
+
+adelie_chinstrap <- penguins %>% 
+  filter(species %in% c('Adelie', 'Chinstrap')) %>% 
+  mutate(species = fct_drop(species)) %>%  # take species column, and drop any species that are blank (i.e. Gentoo)
+  select(-year) %>% 
+  drop_na()
+  # %in% function asks each value if 'A' or 'C' is in the vector, instead of == (== means only those that match exactly - lose some of our observations if just saying 'A', 'C')
+
+```
+
+
+
+# Let's check out the trends across variables 
+```{r}
+ggplot(data = adelie_chinstrap, aes(x = body_mass_g, y = flipper_length_mm)) + 
+  geom_point(aes(color = sex, shape = island))  + 
+  facet_wrap(~ species) # splits into two plots for each species 
+
+
+ggplot(data = adelie_chinstrap, aes(x = body_mass_g, y = bill_length_mm)) + 
+  geom_point(aes(color = sex, shape = island)) + 
+  facet_wrap(~ species)
+```
+
+
+
+
+## Let's do some binary logistic regression! 
+```{r}
+# Let's try to predict penguin species by body mass, bill or flipper length & sex 
+# How well does the model distinguish between adelie and chinstrap penguins 
+# Then compare models 
+
+f1 <- species ~ body_mass_g + flipper_length_mm + sex 
+
+ad_chin_blr1 <- glm(formula = f1, data = adelie_chinstrap, family = 'binomial') # generalized linear model 
+# summary(ad_chin_blr1)
+# reference level is Adelie
+# Body mass is negative, so higher body mass means it's less likely to be a chinstrap & more likely to be Adelie
+# Flipper length is positive 1.778e-1, therefore it's more likely to be a chinstrap as flipper length increases 
+
+blr1_tidy <- tidy(ad_chin_blr1)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
